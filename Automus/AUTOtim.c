@@ -6,6 +6,11 @@
 #pragma config(Motor,  motor10,         middleDriveMotor, tmotorVexIQ, PIDControl, encoder)
 
 
+static void resetDirection(void)
+	{
+		resetGyro(gyroSensor);
+	}
+
 task main()
 {
 	resetGyro(gyroSensor);
@@ -13,6 +18,7 @@ task main()
 	// Move across the filed and stop 5 inches from the wall
 	moveMotorTarget(middleDriveMotor, -1488, 100); // Move to rail and knock balls off
 	waitUntilMotorStop(middleDriveMotor);
+	//test
 	displayMotorValues(line3, leftDriveMotor);
 
 	//Raise the claw into position
