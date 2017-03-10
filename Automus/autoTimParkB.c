@@ -5,6 +5,7 @@
 #pragma config(Motor,  motor9,          rightClawMotor, tmotorVexIQ, PIDControl, reversed, encoder)
 #pragma config(Motor,  motor10,         middleDriveMotor, tmotorVexIQ, PIDControl, encoder)
 
+// Park on the bridge from the Blue Scoring Zone starting position.
 
 static void middleDrive(const int ecount, const int speed)
 {
@@ -26,39 +27,18 @@ static void fourWheelDrive(const int ecount, const int speed)
 	waitUntilMotorStop(leftDriveMotor);
 }
 
-static void realign(const float deg, const int speed)
+static void fourWheelCurve(const int ecount, const int speed1, const int speed2)
 {
-	if (getGyroDegreesFloat(gyroSensor) < deg) {
-		displaySensorValues(line1, gyroSensor);
-		setMotorSpeed(leftDriveMotor, -speed);
-		setMotorSpeed(rightDriveMotor, speed);
-		waitUntil(getGyroDegreesFloat(gyroSensor) >= deg);
-	}
-	if (getGyroDegreesFloat(gyroSensor) > deg) {
-		displaySensorValues(line1, gyroSensor);
-		setMotorSpeed(leftDriveMotor, speed);
-		setMotorSpeed(rightDriveMotor, -speed);
-		waitUntil(getGyroDegreesFloat(gyroSensor) <= deg);
-	}
-	stopAllMotors();
-	setMotor(middleDriveMotor, -speed);
-	wait(1, seconds);
-	stopAllMotors();
+	moveMotorTarget(leftDriveMotor, ecount, speed1);
+	moveMotorTarget(rightDriveMotor, ecount, speed2);
+	waitUntilMotorStop(leftDriveMotor);
 }
 
 task main()
 {
-	middleDrive(-35, 100);
-	resetGyro(gyroSensor);
-	moveClaw(-210, 75);
-	fourWheelDrive(950, 50);
-	moveClaw(-260, 75);
-	fourWheelDrive(-950, 75);
-	realign(0.5, 25);
-	middleDrive(735, 50);
-	fourWheelDrive(-450, 50);
-	moveClaw(-230, 75);
-	wait(.5, seconds);
-	moveClaw(250, 100);
+	middleDrive(750, 100);
+	fourWheelDrive(-1290, 100);
 	stopAllMotors();
+	wait(10, minutes);  // Holds robot in position
+
 }

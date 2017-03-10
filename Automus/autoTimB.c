@@ -4,57 +4,14 @@
 #pragma config(Motor,  motor7,          rightDriveMotor, tmotorVexIQ, PIDControl, reversed, driveRight, encoder)
 #pragma config(Motor,  motor9,          rightClawMotor, tmotorVexIQ, PIDControl, reversed, encoder)
 #pragma config(Motor,  motor10,         middleDriveMotor, tmotorVexIQ, PIDControl, encoder)
-/************************************************************************************************************/
 
-static float getDirection(void)
+
+static void middleDrive(const int ecount, const int speed)
 {
-	const float drift=0.135;  /*deg/sec gyro drift*/
-	return getGyroHeadingFloat(gyroSensor) - drift * time1[T4];
+	moveMotorTarget(middleDriveMotor, ecount, speed);
+	waitUntilMotorStop(middleDriveMotor);
 }
 
-static void middleDrive(const int ecount, const int speed, const float deg)
-{
-//	const int Fast = 50;
-	const int slow = (speed - 25);
-	int speedRight = speed;
-	int speedLeft = speed;
-	setMotorSpeed(leftDriveMotor, speedLeft);
-	setMotorSpeed(rightDriveMotor, speedRight);
-	while(getMotorEncoder(leftDriveMotor) < ecount)
-	{
-		float direction = getDirection();
-		if (direction > deg) {
-			if (speedLeft != speed) {
-				speedLeft = speed;
-				setMotorSpeed(leftDriveMotor, speedLeft);
-			}
-			if (speedRight == speed) {
-				speedRight = slow;
-				setMotorSpeed(rightDriveMotor, speedRight);
-			}
-		} else if (direction < deg) {
-			if (speedLeft == speed) {
-				speedLeft = slow;
-				setMotorSpeed(leftDriveMotor, speedLeft);
-			}
-			if (speedRight != speed) {
-				speedRight = speed;
-				setMotorSpeed(rightDriveMotor, speedRight);
-			}
-		} else {
-			if (speedLeft != speed) {
-				speedLeft = speed;
-				setMotorSpeed(leftDriveMotor, speedLeft);
-			}
-			if (speedRight != speed) {
-				speedRight = speed;
-				setMotorSpeed(rightDriveMotor, speedRight);
-			}
-		}
-	}
-	stopAllMotors();
-}
-//*************************************************************
 static void moveClaw(const int ecount, const int speed)
 {
 	moveMotorTarget(leftClawMotor, ecount, speed);
@@ -69,18 +26,39 @@ static void fourWheelDrive(const int ecount, const int speed)
 	waitUntilMotorStop(leftDriveMotor);
 }
 
+static void realign(const float deg, const int speed)
+{
+	if (getGyroDegreesFloat(gyroSensor) < deg) {
+		displaySensorValues(line1, gyroSensor);
+		setMotorSpeed(leftDriveMotor, -speed);
+		setMotorSpeed(rightDriveMotor, speed);
+		waitUntil(getGyroDegreesFloat(gyroSensor) >= deg);
+	}
+	if (getGyroDegreesFloat(gyroSensor) > deg) {
+		displaySensorValues(line1, gyroSensor);
+		setMotorSpeed(leftDriveMotor, speed);
+		setMotorSpeed(rightDriveMotor, -speed);
+		waitUntil(getGyroDegreesFloat(gyroSensor) <= deg);
+	}
+	stopAllMotors();
+	setMotor(middleDriveMotor, -speed);
+	wait(.75, seconds);
+	stopAllMotors();
+}
+
 task main()
 {
 	resetGyro(gyroSensor);
-	middleDrive(1488, 100, 0.0);
-	//moveClaw(180, 75);
-	//fourWheelDrive(950, 50);
-	//moveClaw(-270, 75);
-	//fourWheelDrive(-950, 75);
-	//middleDrive(770, 75);
-	//fourWheelDrive(-480, 50);
-	//moveClaw(-200, 100);
-	//wait(1, seconds);
-	//moveClaw(150, 100);
+	middleDrive(-1488, 100);
+	moveClaw(-200, 75);
+	realign(0.5, 25);
+	fourWheelDrive(950, 50);
+	moveClaw(-260, 75);
+	fourWheelDrive(-950, 75);
+	middleDrive(735, 60);
+	fourWheelDrive(-450, 50);
+	moveClaw(-230, 75);
+	wait(.5, seconds);
+	moveClaw(250, 100);
 	stopAllMotors();
 }
